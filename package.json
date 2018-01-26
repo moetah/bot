@@ -1,0 +1,19 @@
+{
+  "name": "bot",
+  "version": "1.0.0",
+  "description": "discord bot for private use",
+  "scripts": {
+    "start": "node index.js",
+    "test": "nodemon index.js"
+  },
+  "author": "temu",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.3.0",
+    "opusscript": "0.0.6",
+    "ytdl-core": "^0.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.14.11"
+  }
+}

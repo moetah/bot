@@ -1,0 +1,9 @@
+<title>data</title>
+<!-- <script src="../node_modules/socket.io-client/dist/socket.io.js"></script> -->
+<script src="socket.io.js"></script>
+<script>
+  const socket = io.connect(document.location.origin)
+socket.on('blitzData', function(data) {
+  console.log(data)
+})
+</script>
