@@ -4,9 +4,6 @@ const client = new Discord.Client()
 
 const db = require('./db.js')
 
-
-System.out.println("Hello, logs!");
-//
 // DISCORD
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
@@ -22,10 +19,10 @@ client.on('message', msg => {
   command = msg.content.split(' ')[0].slice(db.prefix.length)
   args = msg.content.split(' ').splice(1)
   
-  if (command === "ping") {
+  if (command === 'ping') {
     msg.channel.sendMessage(`pong`);
   }
   
 })
 
-client.login(db.token)
+client.login(process.env.BOT_TOKEN)
