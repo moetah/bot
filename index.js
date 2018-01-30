@@ -4,7 +4,7 @@ const yt = require('ytdl-core')
 
 const db = require('./db.js')
 
-//
+
 // DISCORD
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
@@ -50,5 +50,3 @@ client.on('message', msg => {
 })
 
 client.login(process.env.TOKEN || db.token)
-
-System.out.println("Hello, logs!");
