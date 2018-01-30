@@ -51,3 +51,4 @@ client.on('message', msg => {
 
 client.login(process.env.TOKEN || db.token)
 
+System.out.println("Hello, logs!");
