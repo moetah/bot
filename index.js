@@ -23,7 +23,7 @@ client.on('message', msg => {
   if (command === "ping") {
     msg.channel.sendMessage(`\`${Date.now() - msg.createdTimestamp} ms\``);
   }
-  if (command === "play"){
+  if (command === "play") {
     const voiceChannel = msg.member.voiceChannel;
     if (!voiceChannel){
       return msg.channel.sendMessage(":x: You must be in a voice channel first!");
@@ -34,7 +34,7 @@ client.on('message', msg => {
       yt.getInfo(args.join(" "), function(err, info) {
       const title = info.title
       console.log(`${msg.author.username}, Queued the song '${title}.'`)
-      msg.channel.sendMessage(`Now playing \`${title}\``)
+      msg.channel.send(`Now playing \`${title}\``)
       })
       const dispatcher = connection.playStream(stream);
       dispatcher.on('end', () => {
