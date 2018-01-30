@@ -1,9 +1,11 @@
 const Discord = require("discord.js")
 const client = new Discord.Client()
-const yt = require('ytdl-core')
+// const yt = require('ytdl-core')
 
 const db = require('./db.js')
 
+
+System.out.println("Hello, logs!");
 //
 // DISCORD
 client.on('ready', () => {
@@ -21,34 +23,9 @@ client.on('message', msg => {
   args = msg.content.split(' ').splice(1)
   
   if (command === "ping") {
-    msg.channel.sendMessage(`\`${Date.now() - msg.createdTimestamp} ms\``);
-  }
-  if (command === "play") {
-    console.log(`${msg.author} => ${msg.content}`)
-    const voiceChannel = msg.member.voiceChannel;
-    if (!voiceChannel){
-      return msg.channel.sendMessage(":x: You must be in a voice channel first!");
-    }
-    voiceChannel.join()
-    .then(connection => {
-      console.log(`join voice`)
-      let stream = yt(args.join(" "), {audioonly: true});
-      yt.getInfo(args.join(" "), function(err, info) {
-      const title = info.title
-      console.log(`${msg.author.username}, Queued the song '${title}.'`)
-      msg.channel.send(`Now playing \`${title}\``)
-      })
-      const dispatcher = connection.playStream(stream);
-      dispatcher.on('end', () => {
-         voiceChannel.leave();
-       }).catch(e =>{
-         console.error(e);
-       });
-    })
+    msg.channel.sendMessage(`pong`);
   }
   
 })
 
-client.login(process.env.TOKEN || db.token)
-
-System.out.println("Hello, logs!");
+client.login(db.token)
