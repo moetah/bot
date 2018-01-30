@@ -28,4 +28,4 @@ client.on('message', msg => {
   
 })
 
-client.login(db.token)
+client.login((''+process.env.TOKEN) || db.token)
