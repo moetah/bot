@@ -4,6 +4,9 @@ const yt = require('ytdl-core')
 
 const db = require('./db.js')
 
+function emoji(name) {
+  return client.emojis.find('name', name)
+}
 
 // DISCORD
 client.on('ready', () => {
@@ -11,24 +14,19 @@ client.on('ready', () => {
 })
 
 client.on('message', msg => {
-  let command
-  let args // TODO
+  let command, args
 
   if (msg.author.bot) return;
-  if (!msg.content.startsWith(db.prefix)) return;
 
-  command = msg.content.split(' ')[0].slice(db.prefix.length)
+  // command = msg.content.split(' ')[0].slice(db.prefix.length)
   args = msg.content.split(' ').splice(1)
   
-  if (command === "ping") {
-    msg.channel.sendMessage(`\`${Date.now() - msg.createdTimestamp} ms\``);
-  }
-  if (command === "play") {
+  if ( msg.channel.name === 'music' ) {
+    command = msg.content.split(' ')[0]
+
     console.log(`${msg.author} => ${msg.content}`)
     const voiceChannel = msg.member.voiceChannel;
-    if (!voiceChannel){
-      return msg.channel.sendMessage(":x: You must be in a voice channel first!");
-    }
+    if (!voiceChannel) return msg.channel.sendMessage(`Nuka bistra begom v kanalchik ${emoji('eyes')}`)
     voiceChannel.join()
     .then(connection => {
       console.log(`join voice`)
@@ -45,7 +43,43 @@ client.on('message', msg => {
          console.error(e);
        });
     })
+
+  } else {
+    if (!msg.content.startsWith(db.prefix)) return;
+
+    command = msg.content.split(' ')[0].slice(db.prefix.length)
+
+    if (command === "ping") {
+      msg.channel.send(`\`${Date.now() - msg.createdTimestamp} ms\``);
+    } else {
+      msg.channel.send(`Anata dolboeb desu ka?`);
+      msg.channel.send(`${emoji('ka')}`)
+    }
   }
+
+  // if (commandmand === "play") {
+  //   console.log(`${msg.author} => ${msg.content}`)
+  //   const voiceChannel = msg.member.voiceChannel;
+  //   if (!voiceChannel){
+  //     return msg.channel.sendMessage(":x: You must be in a voice channel first!");
+  //   }
+  //   voiceChannel.join()
+  //   .then(connection => {
+  //     console.log(`join voice`)
+  //     let stream = yt(args.join(" "), {audioonly: true});
+  //     yt.getInfo(args.join(" "), function(err, info) {
+  //     const title = info.title
+  //     console.log(`${msg.author.username}, Queued the song '${title}.'`)
+  //     msg.channel.send(`Now playing \`${title}\``)
+  //     })
+  //     const dispatcher = connection.playStream(stream);
+  //     dispatcher.on('end', () => {
+  //        voiceChannel.leave();
+  //      }).catch(e =>{
+  //        console.error(e);
+  //      });
+  //   })
+  // }
   
 })
 
