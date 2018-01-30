@@ -2,6 +2,7 @@
   "name": "bot",
   "version": "1.0.0",
   "description": "discord bot for private use",
+  "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "test": "nodemon index.js"
