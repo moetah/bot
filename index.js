@@ -24,12 +24,14 @@ client.on('message', msg => {
     msg.channel.sendMessage(`\`${Date.now() - msg.createdTimestamp} ms\``);
   }
   if (command === "play") {
+    console.log(`${msg.author} => ${msg.content}`)
     const voiceChannel = msg.member.voiceChannel;
     if (!voiceChannel){
       return msg.channel.sendMessage(":x: You must be in a voice channel first!");
     }
     voiceChannel.join()
     .then(connection => {
+      console.log(`join voice`)
       let stream = yt(args.join(" "), {audioonly: true});
       yt.getInfo(args.join(" "), function(err, info) {
       const title = info.title
