@@ -58,7 +58,7 @@ client.on('message', msg => {
       const voiceChannel = msg.member.voiceChannel
 
       function play(song) {
-        if (!song) return msg.channel.sendMessage('Pustata').then(() => {
+        if (!song) return msg.channel.send('Pustata').then(() => {
           queue.playing = false
         })
 
@@ -76,6 +76,26 @@ client.on('message', msg => {
           .setThumbnail(song.thumbnail)
         )
           dispatcher = connection.playStream(ytdl(song.url, { audioonly: true }), {passes: 1})
+          let collector = msg.channel.createCollector(m => m);
+			    collector.on('message', m => {
+            if (m.content.startsWith('=')) {
+              msg.channel.send('paused').then(() => {dispatcher.pause();});
+            } else if (m.content.startsWith('-')){
+              msg.channel.send('resumed').then(() => {dispatcher.resume();});
+            } else if (m.content.startsWith('>')){
+              msg.channel.send('skipped').then(() => {dispatcher.end();});
+            // } else if (m.content.startsWith('+')){
+            //   if (Math.round(dispatcher.volume*50) >= 100) return msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
+            //   dispatcher.setVolume(Math.min((dispatcher.volume*50 + (2*(m.content.split('+').length-1)))/50,2));
+            //   msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
+            // } else if (m.content.startsWith('volume-')){
+            //   if (Math.round(dispatcher.volume*50) <= 0) return msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
+            //   dispatcher.setVolume(Math.max((dispatcher.volume*50 - (2*(m.content.split('-').length-1)))/50,0));
+            //   msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
+            // } else if (m.content.startsWith('>>')){
+            //   msg.channel.send(`time: ${Math.floor(dispatcher.time / 60000)}:${Math.floor((dispatcher.time % 60000)/1000) <10 ? '0'+Math.floor((dispatcher.time % 60000)/1000) : Math.floor((dispatcher.time % 60000)/1000)}`);
+            // }
+          });
           dispatcher.on('end', () => {
             // collector.stop()
             play(queue.songs.shift())
@@ -90,6 +110,9 @@ client.on('message', msg => {
       }
       
       play(queue.songs.shift())
+    },
+    skip: (msg) => {
+
     }
   }
 
