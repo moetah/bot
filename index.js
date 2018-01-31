@@ -13,12 +13,12 @@ function emoji(name) {
   return client.emojis.find('name', name)
 }
 
-function formatSong(msg, linkInfo) {
+function formatSong(msg, info) {
   return {
-    url:       linkInfo.video_url,
-    title:     linkInfo.title,
-    thumbnail: linkInfo.thumbnail_url,
-    length:    linkInfo.length_seconds,
+    url:       info.video_url,
+    title:     info.title,
+    thumbnail: info.thumbnail_url,
+    length:    info.length_seconds,
     author: {
       username: msg.author.username,
       id: msg.author.id,
@@ -36,7 +36,7 @@ let commands = {}
 yt.search('wakaba girl op', 5,{order: 'relevance'}, function(err, res) {
   if (err) msg.channel.send('cheta huinya')
   else {
-    console.log(res.items)
+    // console.log(res.items)
   }
 })
 
@@ -133,11 +133,13 @@ client.on('message', msg => {
         if ( !queue.playing ) commands.music.start(msg)
       })
     } else {
-      command = msg.content.split(' ')[0]
-
-      yt.search(command, 1, {order: 'relevance'}, function(err, res) {
+      command = msg.content
+      console.log(command)
+      yt.search(command, 2, {order: 'relevance'}, function(err, res) {
         if (err) msg.channel.send('cheta huinya')
         else {
+          console.log(res.items[0])
+          console.log(`https://www.youtube.com/watch?v=${res.items[0].id.videoId}`)
           ytdl.getInfo(`https://www.youtube.com/watch?v=${res.items[0].id.videoId}`, (err, songInfo) => {
             queue.songs.push(formatSong(msg, songInfo))
             if ( !queue.playing ) commands.music.start(msg)
@@ -146,8 +148,6 @@ client.on('message', msg => {
       })
     }
     msg.delete(3000)
-
-
 // ------------------------------------------------
   } else {
     if (!msg.content.startsWith(db.prefix)) return;
