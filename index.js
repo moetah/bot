@@ -33,6 +33,14 @@ let queue = {
 }
 let commands = {}
 
+yt.search('wakaba girl op', 5,{order: 'relevance'}, function(err, res) {
+  if (err) msg.channel.send('cheta huinya')
+  else {
+    console.log(res.items)
+  }
+})
+
+// testAll()
 
 // DISCORD
 client.on('ready', () => {
@@ -127,7 +135,7 @@ client.on('message', msg => {
     } else {
       command = msg.content.split(' ')[0]
 
-      yt.search(command, 1, function(err, res) {
+      yt.search(command, 1, {order: 'relevance'}, function(err, res) {
         if (err) msg.channel.send('cheta huinya')
         else {
           ytdl.getInfo(`https://www.youtube.com/watch?v=${res.items[0].id.videoId}`, (err, songInfo) => {
