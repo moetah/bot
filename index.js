@@ -79,11 +79,12 @@ client.on('message', msg => {
           let collector = msg.channel.createCollector(m => m);
 			    collector.on('message', m => {
             if (m.content.startsWith('=')) {
-              msg.channel.send('paused').then(() => {dispatcher.pause();});
+              msg.channel.send('paused').then(() => {dispatcher.pause()})
             } else if (m.content.startsWith('-')){
-              msg.channel.send('resumed').then(() => {dispatcher.resume();});
+              msg.channel.send('resumed').then(() => {dispatcher.resume()})
             } else if (m.content.startsWith('>')){
-              msg.channel.send('skipped').then(() => {dispatcher.end();});
+              msg.channel.send('skipped').then(() => {dispatcher.end()})
+            }
             // } else if (m.content.startsWith('+')){
             //   if (Math.round(dispatcher.volume*50) >= 100) return msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
             //   dispatcher.setVolume(Math.min((dispatcher.volume*50 + (2*(m.content.split('+').length-1)))/50,2));
