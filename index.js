@@ -8,10 +8,7 @@ const cfg = require('./config.js')
 
 const yt = new YouTube()
 const client = new Discord.Client({autoReconnect: true, max_message_cache: 0})
-// const db = new Db()
 
-
-db.setLoh()
 
  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
  // FUNCTIONS & VARIABLES
@@ -21,7 +18,7 @@ function emoji(name) {
 }
 
 function formatSong(msg, info) {
-  // console.log(info)
+
   let id = ( info.id.videoId ? info.id.videoId : info.id)
   let duration = {
     total: 0,
@@ -34,28 +31,23 @@ function formatSong(msg, info) {
 
     let char = i.slice(-1)
     i = i.slice(0,-1)
-    console.log(i.length)
 
     if (i.length == 1) i = '0' + i
     else               i = i
-
-    console.log(i)
 
     if      ( char === 'H' ) duration.h = i
     else if ( char === 'M' ) duration.m = i
     else if ( char === 'S' ) duration.s = i
   })
-  duration.total += duration[1]*3600 + duration[2]*60 + duration[3]
 
-  console.log(duration)
+  duration.total += (+duration.h)*3600 + (+duration.m)*60 + (+duration.s)
 
   return {
     id: id,
     url:       `https://www.youtube.com/watch?v=${id}`,
     title:     info.snippet.title,
     thumbnail: info.snippet.thumbnails.default.url,
-    // length:    info.length_seconds,
-    duration:  '0',
+    duration:  duration,
     author: {
       username: msg.author.username,
       id: msg.author.id,
@@ -66,8 +58,10 @@ function formatSong(msg, info) {
 
 function musicEmbed(action, song) {
   let embed = new Discord.RichEmbed()
+
   let authorUrl = `https://cdn.discordapp.com/avatars/${song.author.id}/${song.author.avatar}.png`
-  let duration = `${song.duration.h} : ${song.duration.m} : ${song.duration.}`
+  let duration = `${song.duration.h} : ${song.duration.m} : ${song.duration.s}`
+
   if (action === 'np') {
     embed
     .setColor('#72F522')
@@ -99,7 +93,7 @@ function musicEmbed(action, song) {
     .setColor('#333333')
     .setURL(song.url)
   }
-  // console.log(embed)
+
   return embed
 }
 
@@ -107,24 +101,30 @@ let intId
 let queue = {}
 let commands = {}
 commands.music = {
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   start: msg => {
+
     queue[msg.guild.id].playing = true
     let dispatcher
     const voiceChannel = msg.member.voiceChannel
 
     function play(song) {
-      if (song === undefined) return msg.channel.send(musicEmbed('empty', song)).then(() => {
-        queue[msg.guild.id].playing = false
-        msg.channel.setTopic(`Peaceful place without noise`)
-      })
+      // if (!queue[msg.guild.id].songs.length) return msg.channel.send(musicEmbed('empty', song)).then(() => {
+      //   queue[msg.guild.id].playing = false
+      //   msg.channel.setTopic(`Peaceful place without noise`)
+      // })
+      console.log(song)
       
       msg.channel.setTopic(`np: ${song.title}`)
 
-      voiceChannel.join().then(async connection => {
-        let np = msg.channel.send( musicEmbed('np', song) ).then(m => m.delete(10000))
-        // np.delete(3000)
-        np.then(m => m.delete(10000))
-        dispatcher = connection.playStream(ytdl(song.url, { audioonly: true }), {passes: 3})
+      voiceChannel.join().then(connection => {
+        // let np = await msg.channel.send( musicEmbed('np', song) )
+        // np.delete(song.duration.total*1000)
+
+        
+        // np.then(m => m.delete(song.duration.total))
+        dispatcher = connection.playStream(ytdl(song.url, { audioonly: true }) )
+        msg.channel.send(musicEmbed('np', song))
 
         let collector = msg.channel.createCollector(m => m)
         collector.on('collect', m => {
@@ -133,7 +133,7 @@ commands.music = {
           } else if (m.content == '-'){
             msg.channel.send('resumed').then(() => {dispatcher.resume()})
           } else if (m.content == '>'){
-            msg.channel.send( musicEmbed('skip', song) ).then(() => {dispatcher.end(); np.delete()})
+            msg.channel.send( musicEmbed('skip', song) ).then(() => {dispatcher.end()})
           }
           // } else if (m.content.startsWith('+')){
           //   if (Math.round(dispatcher.volume*50) >= 100) return msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
@@ -147,15 +147,16 @@ commands.music = {
           //   msg.channel.send(`time: ${Math.floor(dispatcher.time / 60000)}:${Math.floor((dispatcher.time % 60000)/1000) <10 ? '0'+Math.floor((dispatcher.time % 60000)/1000) : Math.floor((dispatcher.time % 60000)/1000)}`);
           // }
         })
-
         dispatcher.on('end', () => {
-          np.delete()
+          // console.log(np)
+          // np.then(m => m.delete())
           collector.stop()
           play(queue[msg.guild.id].songs.shift())
         })
         dispatcher.on('error', (err) => {
+          if (err) console.log(err)
           return msg.channel.send('error: ' + err).then(() => {
-            np.delete()
+            // np.delete()
             collector.stop()
             play(queue[msg.guild.id].songs.shift())
           })
@@ -165,53 +166,65 @@ commands.music = {
     
     play(queue[msg.guild.id].songs.shift())
   },
-
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   queue: msg => {
-    JSON.stringify(msg.channel.send(queue[msg.guild.id].songs))
+    console.log(queue[msg.guild.id].songs)
   }
 }
 
-// DISCORD
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ // DISCORD
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
 
-client.on('message', async msg => {
+client.on('message', msg => {
   let command, args
 
   if (msg.author.bot) return;
 
   args = msg.content.split(' ').splice(1)
 
-  // MUSIC HAS OWN RULES 
+  // MUSIC HAS OWN RULES
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
   if ( msg.channel.name === 'music' ) {
+
     msg.delete()
+
     if ( !queue[msg.guild.id] ) {
       queue[msg.guild.id] = {}
       queue[msg.guild.id].songs = []
     }
     if ( msg.content.startsWith('!') || msg.content.startsWith('.') ) return msg.channel.send('coms dont use tut').then(m => m.delete(5000))
+
     // search with link
-    if ( msg.content.startsWith('http' ) ) {
+    if ( msg.content.startsWith('http') ) {
+      
       if ( !msg.content.match(/youtube/g) ) return msg.channel.send('youtube mne davai, a ne eto').then(m => m.delete(5000))
+
       // get id
       ytId = msg.content.split(' ')[0].split('=')[1].split('&')[0]
-      
       yt.getById(ytId, (err, res) => {
+        if (err) return console.log(err)
+
         let formatedSong = formatSong(msg, res.items[0])
         queue[msg.guild.id].songs.push(formatedSong)
-        if ( !queue[msg.guild.id].playing ) commands.music.start(msg)
         msg.channel.send(musicEmbed('order', formatedSong))
+        if ( !queue[msg.guild.id].playing ) commands.music.start(msg)
       })
+    
     } else if ( msg.content == 'q' ) {
       commands.music.queue(msg)
+
       // search with string
     } else if ( !['>','<','+','-','=','-','>>'].includes(msg.content) ) {
       let searchTring = msg.content
       yt.search(searchTring, 1, {order: 'relevance'}, async function(err, res) {
+        if (err) console.log(err)
         // search doesnt give enough info bout video
         yt.getById(res.items[0].id.videoId, (e, r) => {
-          if (err || e) msg.channel.send(`cheta huinya: ${err || e}`)
+          if (e) console.log(e)
           else {
             // console.log(res.items[0])
             let formatedSong = formatSong(msg, r.items[0])
@@ -222,7 +235,8 @@ client.on('message', async msg => {
         })
       })
     }
-  // NOT MUSIC, OTHER COMMANDS 
+  // NOT MUSIC, OTHER COMMANDS
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   } else {
     if (!msg.content.startsWith(db.prefix)) return;
 

@@ -3,7 +3,7 @@ module.exports = {
   clientSecret: '--l5C156oLQoc15Zp4Dx204uvXT6gt5j',
   token: 'NDA2MzcyNTQ4MzIyNzg3MzI4.DUx_6Q.HlghbQsNwMv3eBw8bhGWSsAzUBc',
   gglApiKey: 'AIzaSyCgDLfGxXMNwIARoceQ3lcx3zKpx4CNZI8',
-  ytKey: 'AIzaSyBD6IR-yjjSoVsa-u9yOKj7virVmF3S60M',
+  ytKey: 'AIzaSyCp9s1izEngknp9R7Qc6k5Y1X2Vp9dH0Fg',
   prefix: ['!', '.'],
   musicChannel: 'music'
 }
