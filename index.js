@@ -7,7 +7,7 @@ const db = require('./db')
 const cfg = require('./config.js')
 
 const yt = new YouTube()
-const client = new Discord.Client({autoReconnect: true, max_message_cache: 0})
+const client = new Discord.Client({autoReconnect: false, max_message_cache: 0})
 
 
  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +60,7 @@ function musicEmbed(action, song) {
   let embed = new Discord.RichEmbed()
 
   let authorUrl = `https://cdn.discordapp.com/avatars/${song.author.id}/${song.author.avatar}.png`
-  let duration = `${song.duration.h} : ${song.duration.m} : ${song.duration.s}`
+  let duration = `*${song.duration.h}* : *${song.duration.m}* : *${song.duration.s}*`
 
   if (action === 'np') {
     embed
@@ -69,7 +69,7 @@ function musicEmbed(action, song) {
     .setTitle(song.title.toUpperCase())
     .setURL(song.url)
     .setThumbnail(song.thumbnail)
-    .setDescription(`***${duration}***`)
+    .setDescription(`${duration}`)
   } else if (action === 'skip') {
     embed
     .setColor('#F22F41')
@@ -85,7 +85,7 @@ function musicEmbed(action, song) {
     .setTitle(song.title.toUpperCase())
     .setURL(song.url)
     .setThumbnail(song.thumbnail)
-    .setDescription(`***${duration}***`)
+    .setDescription(`${duration}`)
   } else if (action === 'empty') {
     embed
     .setAuthor(`${song.author.username} skiped`, authorUrl)
@@ -97,6 +97,10 @@ function musicEmbed(action, song) {
   return embed
 }
 
+function lg(...args) {
+  console.log(args)
+}
+
 let intId
 let queue = {}
 let commands = {}
@@ -106,25 +110,23 @@ commands.music = {
 
     queue[msg.guild.id].playing = true
     let dispatcher
+    let np
     const voiceChannel = msg.member.voiceChannel
+    // const textChannel = msg.member.textChannel
 
     function play(song) {
       // if (!queue[msg.guild.id].songs.length) return msg.channel.send(musicEmbed('empty', song)).then(() => {
       //   queue[msg.guild.id].playing = false
       //   msg.channel.setTopic(`Peaceful place without noise`)
       // })
-      console.log(song)
       
       msg.channel.setTopic(`np: ${song.title}`)
 
-      voiceChannel.join().then(connection => {
-        // let np = await msg.channel.send( musicEmbed('np', song) )
-        // np.delete(song.duration.total*1000)
-
+      msg.member.voiceChannel.join().then(connection => {
         
-        // np.then(m => m.delete(song.duration.total))
+        let np = msg.channel.send(musicEmbed('np', song))
         dispatcher = connection.playStream(ytdl(song.url, { audioonly: true }) )
-        msg.channel.send(musicEmbed('np', song))
+        // console.log(dispatcher)
 
         let collector = msg.channel.createCollector(m => m)
         collector.on('collect', m => {
@@ -149,19 +151,19 @@ commands.music = {
         })
         dispatcher.on('end', () => {
           // console.log(np)
-          // np.then(m => m.delete())
+          np.then(m => m.delete(1000))
           collector.stop()
           play(queue[msg.guild.id].songs.shift())
         })
         dispatcher.on('error', (err) => {
           if (err) console.log(err)
-          return msg.channel.send('error: ' + err).then(() => {
+          return msg.channel.send(err).then(() => {
             // np.delete()
             collector.stop()
             play(queue[msg.guild.id].songs.shift())
           })
         })
-      })
+      }, e => console.log(e))
     }
     
     play(queue[msg.guild.id].songs.shift())
@@ -177,6 +179,7 @@ commands.music = {
  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
+  // msg.member.voiceChannel.leave()
 })
 
 client.on('message', msg => {
@@ -217,6 +220,8 @@ client.on('message', msg => {
     } else if ( msg.content == 'q' ) {
       commands.music.queue(msg)
 
+    } else if ( msg.content == 'boy next door' ) {
+      msg.member.voiceChannel.leave()
       // search with string
     } else if ( !['>','<','+','-','=','-','>>'].includes(msg.content) ) {
       let searchTring = msg.content
