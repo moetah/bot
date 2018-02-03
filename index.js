@@ -216,7 +216,8 @@ client.on('message', msg => {
         msg.channel.send(musicEmbed('order', formatedSong))
         if ( !queue[msg.guild.id].playing ) commands.music.start(msg)
       })
-    
+    } else if ( msg.content == '@' ) {
+      commands.music.start(msg)
     } else if ( msg.content == 'q' ) {
       commands.music.queue(msg)
 
