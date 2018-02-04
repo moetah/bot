@@ -109,7 +109,7 @@ commands.music =  {
   // let self = this
 
   start: msg => {
-    console.log(this)
+    // console.log(this)
     console.log('start playing')
     // let guild = guilds[msg.guild.id].queue.playing = true
     queue[msg.guild.id].playing = true
@@ -190,8 +190,8 @@ commands.music =  {
   }
 }
 
-process.on('unhandledRejection', (reason) => {
-  console.error(reason)
+process.on('unhandledRejection', (err) => {
+  console.error(err)
   process.exit(1)
 })
 
@@ -201,7 +201,7 @@ process.on('unhandledRejection', (reason) => {
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
   // msg.member.voiceChannel.leave()
-  console.log(client)
+  // console.log(client)
 })
 
 client.on('message', msg => {
@@ -231,7 +231,7 @@ client.on('message', msg => {
       // get id
       ytId = msg.content.split(' ')[0].split('=')[1].split('&')[0]
       yt.getById(ytId, (err, res) => {
-        if (err) return console.log(err)
+        if (err) return console.error(err)
 
         commands.music.add(msg, res)
       })
@@ -244,12 +244,13 @@ client.on('message', msg => {
       msg.member.voiceChannel.leave()
       // search with string
     } else if ( !['>','<','+','-','=','-','>>'].includes(msg.content[0])  ) {
-      let searchTring = msg.content
-      yt.search(searchTring, 1, {order: 'relevance'}, async function(err, res) {
-        if (err) console.log(err)
+      console.log(msg.content)
+      let searchTring = msg.content.split('\n')[0]
+      yt.search(searchTring, 1, {order: 'relevance'}, function(err, res) {
+        if (err) console.error(err)
         // search doesnt give enough info bout video
         yt.getById(res.items[0].id.videoId, (e, r) => {
-          if (e) return console.log(e)
+          if (e) return console.error(e)
 
           commands.music.add(msg, r)
         })
