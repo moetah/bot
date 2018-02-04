@@ -18,7 +18,6 @@ function emoji(name) {
 }
 
 function formatSong(msg, info) {
-
   let id = ( info.id.videoId ? info.id.videoId : info.id)
   let duration = {
     total: 0,
@@ -28,7 +27,6 @@ function formatSong(msg, info) {
   }
 
   info.contentDetails.duration.match(/\d*[HMS]/g).forEach(i => {
-
     let char = i.slice(-1)
     i = i.slice(0,-1)
 
@@ -58,9 +56,13 @@ function formatSong(msg, info) {
 
 function musicEmbed(action, song) {
   let embed = new Discord.RichEmbed()
+  let authorUrl
+  let duration
 
-  let authorUrl = `https://cdn.discordapp.com/avatars/${song.author.id}/${song.author.avatar}.png`
-  let duration = `*${song.duration.h}* : *${song.duration.m}* : *${song.duration.s}*`
+  if (song) {
+    authorUrl = `https://cdn.discordapp.com/avatars/${song.author.id}/${song.author.avatar}.png`
+    duration = `*${song.duration.h}* : *${song.duration.m}* : *${song.duration.s}*`
+  }
 
   if (action === 'np') {
     embed
@@ -76,9 +78,7 @@ function musicEmbed(action, song) {
     .setAuthor(`${song.author.username} skiped`, authorUrl)
     .setTitle(song.title.toUpperCase())
     .setURL(song.url)
-    // .setThumbnail(song.thumbnail)
   } else if (action === 'order') {
-    // console.log('order')
     embed
     .setColor('#FFFFFF')
     .setAuthor(`${song.author.username} ordered`, authorUrl)
@@ -88,10 +88,8 @@ function musicEmbed(action, song) {
     .setDescription(`${duration}`)
   } else if (action === 'empty') {
     embed
-    .setAuthor(`${song.author.username} skiped`, authorUrl)
     .setTitle('Abyssalistic abyssaloiusness abyss')
     .setColor('#333333')
-    .setURL(song.url)
   }
 
   return embed
@@ -101,57 +99,63 @@ function lg(...args) {
   console.log(args)
 }
 
+let guilds
+
 let intId
 let queue = {}
 let commands = {}
-commands.music = {
+commands.music =  {
  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  start: msg => {
+  // let self = this
 
+  start: msg => {
+    console.log(this)
+    console.log('start playing')
+    // let guild = guilds[msg.guild.id].queue.playing = true
     queue[msg.guild.id].playing = true
     let dispatcher
     let np
-    const voiceChannel = msg.member.voiceChannel
+    const voiceChannel = msg.member.voiceChannel.join()
     // const textChannel = msg.member.textChannel
 
-    function play(song) {
-      // if (!queue[msg.guild.id].songs.length) return msg.channel.send(musicEmbed('empty', song)).then(() => {
-      //   queue[msg.guild.id].playing = false
-      //   msg.channel.setTopic(`Peaceful place without noise`)
-      // })
+    function play(song, opts = {}) {
+      if (song === undefined) return msg.channel.send(musicEmbed('empty')).then((m) => {
+        m.delete(3000)
+        queue[msg.guild.id].playing = false
+        msg.channel.setTopic(`Peaceful place without noise`)
+      })
+      console.log(`playing: ${song.title}`)
       
       msg.channel.setTopic(`np: ${song.title}`)
 
-      msg.member.voiceChannel.join().then(connection => {
+      voiceChannel.then(connection => {
         
         let np = msg.channel.send(musicEmbed('np', song))
-        dispatcher = connection.playStream(ytdl(song.url, { audioonly: true }) )
+        dispatcher = connection.playStream(ytdl(song.url, { audioonly: true }))
         // console.log(dispatcher)
 
         let collector = msg.channel.createCollector(m => m)
         collector.on('collect', m => {
-          if (m.content == '=') {
+          if (m.content == '||') {
             msg.channel.send('paused').then(() => {dispatcher.pause()})
-          } else if (m.content == '-'){
+          } else if (m.content == '|>'){
             msg.channel.send('resumed').then(() => {dispatcher.resume()})
           } else if (m.content == '>'){
-            msg.channel.send( musicEmbed('skip', song) ).then(() => {dispatcher.end()})
+            msg.channel.send( musicEmbed('skip', song) ).then(() => {
+              console.log('skipped')
+              dispatcher.end()
+            })
+          } else if (m.content.startsWith('+') ) {
+            console.log(+(m.content.slice(1)))
+            // dispatcher = connection.playStream(song.url, {seek: +(m.content.slice(1))})
+            play(song, {seek: +(m.content.slice(1))})
+          } else if (m.content.startsWith('>>')){
+            msg.channel.send(`time: ${Math.floor(dispatcher.time / 60000)}:${Math.floor((dispatcher.time % 60000)/1000) <10 ? '0'+Math.floor((dispatcher.time % 60000)/1000) : Math.floor((dispatcher.time % 60000)/1000)}`);
           }
-          // } else if (m.content.startsWith('+')){
-          //   if (Math.round(dispatcher.volume*50) >= 100) return msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
-          //   dispatcher.setVolume(Math.min((dispatcher.volume*50 + (2*(m.content.split('+').length-1)))/50,2));
-          //   msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
-          // } else if (m.content.startsWith('volume-')){
-          //   if (Math.round(dispatcher.volume*50) <= 0) return msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
-          //   dispatcher.setVolume(Math.max((dispatcher.volume*50 - (2*(m.content.split('-').length-1)))/50,0));
-          //   msg.channel.send(`Volume: ${Math.round(dispatcher.volume*50)}%`);
-          // } else if (m.content.startsWith('>>')){
-          //   msg.channel.send(`time: ${Math.floor(dispatcher.time / 60000)}:${Math.floor((dispatcher.time % 60000)/1000) <10 ? '0'+Math.floor((dispatcher.time % 60000)/1000) : Math.floor((dispatcher.time % 60000)/1000)}`);
-          // }
         })
         dispatcher.on('end', () => {
-          // console.log(np)
-          np.then(m => m.delete(1000))
+          console.log('dispatcher end')
+          np.then(m => m.delete())
           collector.stop()
           play(queue[msg.guild.id].songs.shift())
         })
@@ -168,11 +172,28 @@ commands.music = {
     
     play(queue[msg.guild.id].songs.shift())
   },
+  add: (msg, song) => {
+    let formatedSong = formatSong(msg, song.items[0])
+
+    queue[msg.guild.id].songs.push(formatedSong)
+    console.log(`queued: ${formatedSong.title}`)
+    msg.channel.send(musicEmbed('order', formatedSong))
+    
+    if ( !queue[msg.guild.id].playing ) commands.music.start(msg)
+  },
+  seek: (msg, moment, plus) => {
+
+  },
  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   queue: msg => {
-    console.log(queue[msg.guild.id].songs)
+    console.log(queue[msg.guild.id])
   }
 }
+
+process.on('unhandledRejection', (reason) => {
+  console.error(reason)
+  process.exit(1)
+})
 
  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
  // DISCORD
@@ -180,6 +201,7 @@ commands.music = {
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
   // msg.member.voiceChannel.leave()
+  console.log(client)
 })
 
 client.on('message', msg => {
@@ -211,10 +233,7 @@ client.on('message', msg => {
       yt.getById(ytId, (err, res) => {
         if (err) return console.log(err)
 
-        let formatedSong = formatSong(msg, res.items[0])
-        queue[msg.guild.id].songs.push(formatedSong)
-        msg.channel.send(musicEmbed('order', formatedSong))
-        if ( !queue[msg.guild.id].playing ) commands.music.start(msg)
+        commands.music.add(msg, res)
       })
     } else if ( msg.content == '@' ) {
       commands.music.start(msg)
@@ -224,29 +243,24 @@ client.on('message', msg => {
     } else if ( msg.content == 'boy next door' ) {
       msg.member.voiceChannel.leave()
       // search with string
-    } else if ( !['>','<','+','-','=','-','>>'].includes(msg.content) ) {
+    } else if ( !['>','<','+','-','=','-','>>'].includes(msg.content[0])  ) {
       let searchTring = msg.content
       yt.search(searchTring, 1, {order: 'relevance'}, async function(err, res) {
         if (err) console.log(err)
         // search doesnt give enough info bout video
         yt.getById(res.items[0].id.videoId, (e, r) => {
-          if (e) console.log(e)
-          else {
-            // console.log(res.items[0])
-            let formatedSong = formatSong(msg, r.items[0])
-            queue[msg.guild.id].songs.push(formatedSong)
-            if ( !queue[msg.guild.id].playing ) commands.music.start(msg)
-            msg.channel.send(musicEmbed('order', formatedSong))
-          }
+          if (e) return console.log(e)
+
+          commands.music.add(msg, r)
         })
       })
     }
   // NOT MUSIC, OTHER COMMANDS
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   } else {
-    if (!msg.content.startsWith(db.prefix)) return;
+    if (!cfg.prefix.includes(msg.content[0]) ) return;
 
-    command = msg.content.split(' ')[0].slice(db.prefix.length)
+    command = msg.content.split(' ')[0].slice(1)
 
     if (command === 'ping') {
       msg.channel.send(`\`${Date.now() - msg.createdTimestamp} ms\``);
